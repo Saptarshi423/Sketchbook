@@ -7,6 +7,8 @@ import styles from './index.module.css';
 import { MENU_ITEMS } from "@/constants";
 import { menuItemClick, actionItemClick } from "@/slice/menuSlice";
 
+import { socket } from "../../../socket";
+
 
 
 const Menu = ()=>{
@@ -14,7 +16,9 @@ const Menu = ()=>{
     const dispatch = useDispatch();
 
     const handleMenuClick = (itemName)=>{
-        dispatch(menuItemClick(itemName))
+        console.log(itemName)
+        dispatch(menuItemClick(itemName));
+        socket.emit("changeMenuItem", {itemName});
     }
 
     const handleActionItemClick = (itemName)=>{

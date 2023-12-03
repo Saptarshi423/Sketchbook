@@ -31,10 +31,19 @@ const Board = () => {
       anchor.click();
     }
     else  if (actionMenuItem === MENU_ITEMS.UNDO || actionMenuItem === MENU_ITEMS.REDO) {
-      if(historyPointer.current > 0 && actionMenuItem === MENU_ITEMS.UNDO) historyPointer.current -= 1
+      if(historyPointer.current <  0 && actionMenuItem === MENU_ITEMS.UNDO) historyPointer.current = 0;
+      if(historyPointer.current >= 0 && actionMenuItem === MENU_ITEMS.UNDO) historyPointer.current -= 1;
       if(historyPointer.current < drawHistory.current.length - 1 && actionMenuItem === MENU_ITEMS.REDO) historyPointer.current += 1
-      const imageData = drawHistory.current[historyPointer.current]
-      context.putImageData(imageData, 0, 0)
+      const imageData = drawHistory.current[historyPointer.current];
+      console.log(imageData)
+      // context.putImageData(imageData, 0, 0)
+      if(imageData == undefined || !imageData){
+        context.fillStyle = "rgb(255, 255, 255)";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        drawHistory.current.push(context.getImageData(0,0,canvas.width, canvas.height));
+      }else{
+        context.putImageData(imageData, 0, 0);
+      }
   }
     dispatch(actionItemClick(null));
   },[actionMenuItem])
@@ -60,7 +69,7 @@ const Board = () => {
   return () => {
     socket.off('changeConfig', handleChangeConfig)
   }
-  }, [color, size]);
+  }, [color, size, activeMenuItem]);
 
   // before browser paint.
   useLayoutEffect(() => {
@@ -107,12 +116,18 @@ const Board = () => {
       drawLine(path.x, path.y)
     }
 
+    const handleChangeMenuItem = (item)=>{
+      console.log(item)
+      dispatch(menuItemClick(item.itemName))
+    }
+
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
 
-    socket.on('beginPath', handleBeginPath)
-    socket.on('drawLine', handleDrawLine)
+    socket.on('beginPath', handleBeginPath);
+    socket.on('drawLine', handleDrawLine);
+    socket.on('changeMenuItem', handleChangeMenuItem);
 
     return () => {
       canvas.removeEventListener('mousedown', handleMouseDown);
@@ -121,6 +136,8 @@ const Board = () => {
 
       socket.off('beginPath', handleBeginPath);
       socket.off('drawLine', handleDrawLine);
+
+      socket.off('changeMenuItem', handleChangeMenuItem);
     }
 }, [])
 
